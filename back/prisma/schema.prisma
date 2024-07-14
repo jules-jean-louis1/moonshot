@@ -12,3 +12,143 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  players   Player[]
+}
+
+enum Role {
+  USER
+  MODO
+  ADMIN
+}
+
+model Player {
+  id        String   @id @default(uuid())
+  name      String
+  team      String?
+  elo       Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  Quiz      Quiz[]
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  FINISHED
+}
+
+model Game {
+  id                 String   @id @default(uuid())
+  players            Json[]
+  winner             String?
+  score              Json[]
+  status             Status   @default(OPEN)
+  jocker_used        Json[]
+  disconneted_player Json[]
+  current_question   Int
+  total_question     Int
+  quiz_id            String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  quiz               Quiz     @relation(fields: [quiz_id], references: [id])
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model Quiz {
+  id            String         @id @default(uuid())
+  name          String
+  description   String
+  max_player    Int
+  difficulty    Difficulty     @default(EASY)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  ownerId       String
+  owner         Player         @relation(fields: [ownerId], references: [id])
+  questions     Question[]
+  Game          Game[]
+  themeQuizzes  ThemeQuiz[]
+  quizQuestions QuizQuestion[]
+}
+
+model Question {
+  id             String          @id @default(uuid())
+  question       String
+  choices        Json[]
+  correct        Status
+  difficulty     Difficulty      @default(EASY)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  quiz_id        String
+  quiz           Quiz            @relation(fields: [quiz_id], references: [id])
+  themeId        String
+  theme          Theme           @relation(fields: [themeId], references: [id])
+  themeQuestions ThemeQuestion[]
+  quizQuestions  QuizQuestion[]
+}
+
+model Theme {
+  id             String          @id @default(uuid())
+  name           String
+  description    String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  questions      Question[]
+  themeQuestions ThemeQuestion[]
+  themeQuizzes   ThemeQuiz[]
+}
+
+model ThemeQuestion {
+  id         String   @id @default(uuid())
+  themeId    String
+  questionId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  theme      Theme    @relation(fields: [themeId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id])
+}
+
+model ThemeQuiz {
+  id        String   @id @default(uuid())
+  themeId   String
+  quizId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  theme     Theme    @relation(fields: [themeId], references: [id])
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+}
+
+model QuizQuestion {
+  id         String   @id @default(uuid())
+  quizId     String
+  questionId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id])
+}
+
+model Jocker {
+  id          String   @id @default(uuid())
+  name        String
+  code        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
